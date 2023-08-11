@@ -1,7 +1,6 @@
-pip install pandas
 import re
-import pandas as pd
-import requests
+from flask import pandas as pd
+from flask import requests
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
