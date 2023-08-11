@@ -3,7 +3,6 @@ from flask import request
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/api/*": {"origins": "https://sub.example.app"}})
 
 def add_space_to_korean_words(text):
     pattern = re.compile(r'(?<![ㄱ-ㅎㅏ-ㅣ가-힣])((?!도|시|군|구|읍|면|로|길)[ㄱ-ㅎㅏ-ㅣ가-힣]+)')
