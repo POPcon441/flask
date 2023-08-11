@@ -1,3 +1,4 @@
+pip install pandas
 import re
 import pandas as pd
 import requests
