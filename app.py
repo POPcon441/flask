@@ -252,6 +252,3 @@ def search():
     except Exception as e:
         response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
         return jsonify(response_data)
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=9999)
