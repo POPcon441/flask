@@ -1,6 +1,4 @@
 import re
-pip3 install pandas
-pip3 install requests
 import pandas as pd
 import requests
 from flask import Flask, jsonify, request
