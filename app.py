@@ -1,6 +1,7 @@
 import re
-import pandas as pd
-import requests
+from pandas import pandas as pd
+from openpyxl import openpyxl
+from requests import requests
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
