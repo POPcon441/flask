@@ -325,7 +325,7 @@ def convert_hybrid_words(text):
     return text
 
 # Load data from the other Excel file (contains the mapping)
-mapping_file = 'C:\\Users\\rkten\\OneDrive\\바탕 화면\\gongmojeon\\통합 지역 데이터.xlsx'
+mapping_file = 'data.xlsx'
 mapping_df = pd.read_excel(mapping_file)
 
 # Create a dictionary mapping English words to Korean words
@@ -428,7 +428,7 @@ def process_address_patterns(address):
 
 
 # Load mapping data from the Excel file
-mapping_file = 'C:\\Users\\rkten\\OneDrive\\바탕 화면\\gongmojeon\\통합 지역 데이터.xlsx'
+mapping_file = 'data.xlsx'
 mapping_df = pd.read_excel(mapping_file)
 mapping_dict = dict(zip(mapping_df['로마자표기'], mapping_df['한글']))
 
