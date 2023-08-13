@@ -319,4 +319,4 @@ def perform_address_search(search_data):
     return ['F']
     
 if __name__ == "__main__":
-	app.run(https://port-0-flask-3prof2lll66y4t2.sel3.cloudtype.app/)
+	 app.run(port=5000, debug=True)
