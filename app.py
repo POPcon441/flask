@@ -2,6 +2,7 @@ import re
 from pandas import pandas as pd
 import requests
 from flask import Flask, jsonify, request
+from gunicorn.app.wsgiapp import run
 
 app = Flask(__name__)
 
@@ -231,7 +232,7 @@ def perform_address_search(search_data):
 
     return ['F']
 
-@app.route('/https://port-0-flask-3prof2lll66y4t2.sel3.cloudtype.app/', methods=['POST'])
+@app.route('/search', methods=['POST'])
 def search():
     try:
         if request.is_json:
@@ -316,6 +317,6 @@ def perform_address_search(search_data):
                 return [result.get('roadAddr', '') for result in result_data]
 
     return ['F']
-
+    
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    run(app, host="0.0.0.0", port=5000)
