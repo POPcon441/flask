@@ -282,7 +282,7 @@ def perform_address_search(search_data):
     }
 
     response = requests.get(base_url, params=payload)
-
+    
     if response.status_code == 200:
         search_result = response.json()
         print("Address API Response:", search_result)  # 추가된 출력문
