@@ -249,7 +249,7 @@ def perform_address_search(search_data):
                 return [result.get('roadAddr', '') for result in result_data]
     return ['F']
 # 주소 전처리 및 검색 요청 함수 정의
-@app.route(/, methods=['POST'])
+@app.route('/', methods=['POST'])
 def send_request():
     try:
         if request.is_json:
