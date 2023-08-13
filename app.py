@@ -248,8 +248,9 @@ def perform_address_search(search_data):
             if result_data:
                 return [result.get('roadAddr', '') for result in result_data]
     return ['F']
+url = 'https://port-0-flask-3prof2lll66y4t2.sel3.cloudtype.app/'
 # 주소 전처리 및 검색 요청 함수 정의
-@app.route(/https://port-0-flask-3prof2lll66y4t2.sel3.cloudtype.app/send_request, methods=['POST'])
+@app.route(url, methods=['POST'])
 def send_request():
     try:
         if request.is_json:
