@@ -232,7 +232,7 @@ def perform_address_search(search_data):
 
     return ['F']
 
-@app.route('/https://port-0-flask-3prof2lll66y4t2.sel3.cloudtype.app/', methods=['POST'])
+@app.route('/search', methods=['POST'])
 def search():
     try:
         if request.is_json:
@@ -319,4 +319,4 @@ def perform_address_search(search_data):
     return ['F']
     
 if __name__ == "__main__":
-	app.run(port=5000, debug=True)
+	app.run(https://port-0-flask-3prof2lll66y4t2.sel3.cloudtype.app/)
