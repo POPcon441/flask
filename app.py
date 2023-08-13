@@ -249,43 +249,92 @@ def perform_address_search(search_data):
                 return [result.get('roadAddr', '') for result in result_data]
     return ['F']
 # 주소 전처리 및 검색 요청 함수 정의
-@app.route('/', methods=['POST'])
-try:
-    if request.is_json:
-        request_data = request.get_json()
-    else:
-        request_data = {'requestList': [{'seq': '000001', 'requestAddress': request.data.decode('utf-8')}]}
-        
-    request_list = request_data.get('requestList', [])
-    results = []
-
-    for req in request_list:
-        seq = req.get('seq')
-        address = req.get('requestAddress')
-        formatted_address = address
-
-        # 여기에 주소 관련 전처리 함수들을 적용합니다.
-        formatted_address = add_space_to_korean_words(formatted_address)
-        formatted_address = add_space_to_uppercase_letters(formatted_address)
-        formatted_address = add_space_to_numbers(formatted_address)
-        formatted_address = remove_commas(formatted_address)
-        formatted_address = process_address_patterns(formatted_address)
-        result = convert_hybrid_words(formatted_address.strip())
-        result = replace_english_with_korean(result.strip())
-        result = correct_and_translate_address(result, mapping_df)
-            
-        result_address = perform_address_search(result)
-
-        if len(result_address) == 1:
-            results.append({'seq': seq, 'resultAddress': result_address[0]})
+@app.route('/send_request', methods=['POST'])
+def send_request():
+    try:
+        if request.is_json:
+            request_data = request.get_json()
         else:
-            results.append({'seq': seq, 'resultAddress': 'F'})
+            request_data = {'requestList': [{'seq': '000001', 'requestAddress': request.data.decode('utf-8')}]}
+        
+        request_list = request_data.get('requestList', [])
 
-    response_data = {'HEADER': {'RESULT_CODE': 'S', 'RESULT_MSG': 'Success'}, 'BODY': results}
-    return jsonify(response_data)
-except Exception as e:
-    response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
-    return jsonify(response_data)
+        results = []
+
+        for req in request_list:
+            seq = req.get('seq')
+            address = req.get('requestAddress')
+
+            formatted_address = address
+            print("Original Address:", formatted_address)
+
+            formatted_address = add_space_to_korean_words(formatted_address)
+            print("After add_space_to_korean_words:", formatted_address)
+
+            formatted_address = add_space_to_uppercase_letters(formatted_address)
+            print("After add_space_to_uppercase_letters:", formatted_address)
+
+            formatted_address = add_space_to_numbers(formatted_address)
+            print("After add_space_to_numbers:", formatted_address)
+
+            formatted_address = remove_commas(formatted_address)
+            print("After remove_commas:", formatted_address)
+
+            # 패턴 매치 수행
+            formatted_address = process_address_patterns(formatted_address)
+            print("After process_address_patterns:", formatted_address)
+
+            result = convert_hybrid_words(formatted_address.strip())
+            print("After convert_hybrid_words:", result)
+
+            result = replace_english_with_korean(result.strip())  # 영어 단어 한글 변환 적용
+            print("After replace_english_with_korean:", result)
+            
+            result = correct_and_translate_address(result, mapping_df)
+            print("correct_and_translate_address:", result)
+
+
+            
+            # 주소 검색 결과 가져오기
+            result_address = perform_address_search(result)
+
+            if len(result_address) == 1:
+                results.append({'seq': seq, 'resultAddress': result_address[0]})
+            else:
+                results.append({'seq': seq, 'resultAddress': 'F'})
+
+        response_data = {'HEADER': {'RESULT_CODE': 'S', 'RESULT_MSG': 'Success'}, 'BODY': results}
+        return jsonify(response_data)
+    except Exception as e:
+        response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
+        return jsonify(response_data)
+
+
+def perform_address_search(search_data):
+    api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
+    base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
+
+    payload = {
+        'confmKey': api_key,
+        'currentPage': '1',
+        'countPerPage': '10',
+        'resultType': 'json',
+        'keyword': search_data,
+    }
+
+    response = requests.get(base_url, params=payload)
+
+    if response.status_code == 200:
+        search_result = response.json()
+        print("Address API Response:", search_result)  # 추가된 출력문
+        if 'results' in search_result and 'juso' in search_result['results']:
+            result_data = search_result['results']['juso']
+            if result_data:
+                # Extract and return the road addresses from the API response
+                return [result.get('roadAddr', '') for result in result_data]
+
+    return ['F']
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
