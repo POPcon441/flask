@@ -250,42 +250,42 @@ def perform_address_search(search_data):
     return ['F']
 # 주소 전처리 및 검색 요청 함수 정의
 @app.route('/', methods=['POST'])
-    try:
-        if request.is_json:
-            request_data = request.get_json()
-        else:
-            request_data = {'requestList': [{'seq': '000001', 'requestAddress': request.data.decode('utf-8')}]}
+try:
+    if request.is_json:
+        request_data = request.get_json()
+    else:
+        request_data = {'requestList': [{'seq': '000001', 'requestAddress': request.data.decode('utf-8')}]}
         
-        request_list = request_data.get('requestList', [])
-        results = []
+    request_list = request_data.get('requestList', [])
+    results = []
 
-        for req in request_list:
-            seq = req.get('seq')
-            address = req.get('requestAddress')
-            formatted_address = address
+    for req in request_list:
+        seq = req.get('seq')
+        address = req.get('requestAddress')
+        formatted_address = address
 
-            # 여기에 주소 관련 전처리 함수들을 적용합니다.
-            formatted_address = add_space_to_korean_words(formatted_address)
-            formatted_address = add_space_to_uppercase_letters(formatted_address)
-            formatted_address = add_space_to_numbers(formatted_address)
-            formatted_address = remove_commas(formatted_address)
-            formatted_address = process_address_patterns(formatted_address)
-            result = convert_hybrid_words(formatted_address.strip())
-            result = replace_english_with_korean(result.strip())
-            result = correct_and_translate_address(result, mapping_df)
+        # 여기에 주소 관련 전처리 함수들을 적용합니다.
+        formatted_address = add_space_to_korean_words(formatted_address)
+        formatted_address = add_space_to_uppercase_letters(formatted_address)
+        formatted_address = add_space_to_numbers(formatted_address)
+        formatted_address = remove_commas(formatted_address)
+        formatted_address = process_address_patterns(formatted_address)
+        result = convert_hybrid_words(formatted_address.strip())
+        result = replace_english_with_korean(result.strip())
+        result = correct_and_translate_address(result, mapping_df)
             
-            result_address = perform_address_search(result)
+        result_address = perform_address_search(result)
 
-            if len(result_address) == 1:
-                results.append({'seq': seq, 'resultAddress': result_address[0]})
-            else:
-                results.append({'seq': seq, 'resultAddress': 'F'})
+        if len(result_address) == 1:
+            results.append({'seq': seq, 'resultAddress': result_address[0]})
+        else:
+            results.append({'seq': seq, 'resultAddress': 'F'})
 
-        response_data = {'HEADER': {'RESULT_CODE': 'S', 'RESULT_MSG': 'Success'}, 'BODY': results}
-        return jsonify(response_data)
-    except Exception as e:
-        response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
-        return jsonify(response_data)
+    response_data = {'HEADER': {'RESULT_CODE': 'S', 'RESULT_MSG': 'Success'}, 'BODY': results}
+    return jsonify(response_data)
+except Exception as e:
+    response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
+    return jsonify(response_data)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
