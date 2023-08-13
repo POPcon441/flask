@@ -319,4 +319,4 @@ def perform_address_search(search_data):
     return ['F']
     
 if __name__ == "__main__":
-    run(app, host="0.0.0.0", port=5000)
+	app.run(port=5000, debug=True)
