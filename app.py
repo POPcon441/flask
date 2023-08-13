@@ -133,16 +133,6 @@ def convert_hybrid_words(text):
     text = text.replace(' Station-ro', 'Station-ro')
     
     return text
-
-
-
-# Load data from the other Excel file (contains the mapping)
-mapping_file = 'data.xlsx'
-mapping_df = pd.read_excel(mapping_file)
-
-# Create a dictionary mapping English words to Korean words
-mapping_dict = dict(zip(mapping_df['로마자표기'], mapping_df['한글']))
-
 # 함수 내 영어 단어를 한글로 변환하는 부분
 def replace_english_with_korean(sentence):
     def replace_word(match):
@@ -207,7 +197,13 @@ def correct_and_translate_address(address, mapping_df):
 
     corrected_address = ' '.join(corrected_elements)
     return corrected_address
+    
+# Load data from the Excel file (contains the mapping)
+mapping_file = 'data.xlsx'
+mapping_df = pd.read_excel(mapping_file)
+mapping_dict = dict(zip(mapping_df['로마자표기'], mapping_df['한글']))
 
+# 주소 전처리 및 검색 요청 함수 정의
 @app.route('/send_request', methods=['POST'])
 def send_request():
     try:
@@ -282,7 +278,7 @@ def perform_address_search(search_data):
     }
 
     response = requests.get(base_url, params=payload)
-    
+
     if response.status_code == 200:
         search_result = response.json()
         print("Address API Response:", search_result)  # 추가된 출력문
@@ -293,6 +289,8 @@ def perform_address_search(search_data):
                 return [result.get('roadAddr', '') for result in result_data]
 
     return ['F']
+
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
