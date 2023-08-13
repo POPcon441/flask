@@ -316,3 +316,6 @@ def perform_address_search(search_data):
                 return [result.get('roadAddr', '') for result in result_data]
 
     return ['F']
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
