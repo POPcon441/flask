@@ -310,7 +310,7 @@ def perform_address_search(search_data):
     payload = {
         'confmKey': api_key,
         'currentPage': '1',
-        'countPerPage': '2',
+        'countPerPage': '10',
         'resultType': 'json',
         'keyword': search_data,
     }
