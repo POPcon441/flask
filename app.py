@@ -131,7 +131,12 @@ def convert_hybrid_words(text):
     text = text.replace(' Station-ro', 'Station-ro')
     
     return text
-
+    
+def remove_underground_numbers(column_value):
+    if re.match(r'^지하\s?\d+$', column_value):
+        return '답 없음 나와야 함'
+    return column_value
+    
 # Load data from the other Excel file (contains the mapping)
 mapping_file = 'data.csv'
 mapping_df = pd.read_csv(mapping_file)
@@ -252,6 +257,9 @@ def search():
 
             result = replace_english_with_korean(result.strip())  # 영어 단어 한글 변환 적용
             print("After replace_english_with_korean:", result)
+
+            result = remove_underground_numbers(result.strip())
+            print("remove_underground_numbers:", result)
             
             result = remove_unknown_korean_words(result.strip())
             print("remove_unknown_korean_words:", result)
