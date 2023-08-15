@@ -162,6 +162,25 @@ def remove_unknown_korean_words(sentence):
 
     return ' '.join(filtered_words)
     
+def check_address_inclusion(address1, address2):
+    # 도로명 추출 (동 앞의 내용에서 마지막 단어까지)
+    road1 = ' '.join(address1.split('(')[0].split()[:-1])
+    road2 = ' '.join(address2.split('(')[0].split()[:-1])
+    
+    # 동 추출 (괄호 내의 내용)
+    dong1 = address1.split('(')[-1].split(')')[0]
+    dong2 = address2.split('(')[-1].split(')')[0]
+    
+    # 번지 추출
+    bunji1 = address1.split('(')[0].split()[-1]
+    bunji2 = address2.split('(')[0].split()[-1]
+    
+    # 도로명과 동이 일치하는지 확인
+    if road1 == road2 and dong1 == dong2:
+        # 번지 부분을 비교하여 첫 번째 주소의 번지가 두 번째 주소의 번지에 포함되는지 확인
+        return bunji1 in bunji2
+    return False
+
 def perform_address_search(search_data):
     api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
     base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
@@ -169,7 +188,7 @@ def perform_address_search(search_data):
     payload = {
         'confmKey': api_key,
         'currentPage': '1',
-        'countPerPage': '10',
+        'countPerPage': '2',
         'resultType': 'json',
         'keyword': search_data,
     }
@@ -178,14 +197,24 @@ def perform_address_search(search_data):
 
     if response.status_code == 200:
         search_result = response.json()
-        print("Address API Response:", search_result)  # 추가된 출력문
+        print("Address API Response:", search_result)
+        
         if 'results' in search_result and 'juso' in search_result['results']:
             result_data = search_result['results']['juso']
-            if result_data:
-                # Extract and return the road addresses from the API response
-                return [result.get('roadAddr', '') for result in result_data]
+            
+            if not result_data:
+                return 'F'
+            elif len(result_data) == 1:
+                return result_data[0].get('roadAddr', '')
+            elif len(result_data) >= 2:
+                address1 = result_data[0].get('roadAddr', '')
+                address2 = result_data[1].get('roadAddr', '')
+                if check_address_inclusion(address1, address2):
+                    return address1
+                else:
+                    return [result.get('roadAddr', '') for result in result_data]
 
-    return ['F']
+    return 'F'
 
 @app.route('/search', methods=['POST'])
 def search():
