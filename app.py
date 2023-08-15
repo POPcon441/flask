@@ -1,7 +1,8 @@
 import re
-import pandas as pd
+from pandas import pandas as pd
 import requests
 from flask import Flask, jsonify, request
+from gunicorn.app.wsgiapp import run
 
 app = Flask(__name__)
 
@@ -57,6 +58,7 @@ def process_address_patterns(address):
             result += replacement_func(match)
     
     return result.strip()
+
 
 def convert_hybrid_words(text):
     # 정규표현식을 사용하여 한영혼용단어를 찾습니다.
@@ -131,6 +133,8 @@ def convert_hybrid_words(text):
     
     return text
 
+
+
 # Load data from the other Excel file (contains the mapping)
 mapping_file = 'data.xlsx'
 mapping_df = pd.read_excel(mapping_file)
@@ -150,6 +154,9 @@ def replace_english_with_korean(sentence):
 
     return re.sub(r'\b[A-Za-z-]+\b', replace_word, sentence)
 
+
+
+
 korean_words_set = set(mapping_df['한글'])
 
 def remove_unknown_korean_words(sentence):
@@ -161,51 +168,8 @@ def remove_unknown_korean_words(sentence):
             filtered_words.append(word)
 
     return ' '.join(filtered_words)
-    
-def check_address_inclusion(address1, address2):
-    # 도로명 추출 (동 앞의 내용에서 마지막 단어까지)
-    road1 = ' '.join(address1.split('(')[0].split()[:-1])
-    road2 = ' '.join(address2.split('(')[0].split()[:-1])
-    
-    # 동 추출 (괄호 내의 내용)
-    dong1 = address1.split('(')[-1].split(')')[0]
-    dong2 = address2.split('(')[-1].split(')')[0]
-    
-    # 번지 추출
-    bunji1 = address1.split('(')[0].split()[-1]
-    bunji2 = address2.split('(')[0].split()[-1]
-    
-    # 도로명과 동이 일치하는지 확인
-    if road1 == road2 and dong1 == dong2:
-        # 번지 부분을 비교하여 첫 번째 주소의 번지가 두 번째 주소의 번지에 포함되는지 확인
-        if bunji1 in bunji2:
-            return True
-    return False
 
-def perform_address_search(search_data):
-    api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
-    base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
 
-    payload = {
-        'confmKey': api_key,
-        'currentPage': '1',
-        'countPerPage': '2',
-        'resultType': 'json',
-        'keyword': search_data,
-    }
-
-    response = requests.get(base_url, params=payload)
-
-    if response.status_code == 200:
-        search_result = response.json()
-        print("Address API Response:", search_result)  # 추가된 출력문
-        if 'results' in search_result and 'juso' in search_result['results']:
-            result_data = search_result['results']['juso']
-            if result_data:
-                # Extract and return the road addresses from the API response
-                return [result.get('roadAddr', '') for result in result_data]
-
-    return ['F']
 
 @app.route('/search', methods=['POST'])
 
@@ -274,6 +238,51 @@ def search():
     except Exception as e:
         response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
         return jsonify(response_data)
-        
+
+def check_address_inclusion(address1, address2):
+    # 도로명 추출 (동 앞의 내용에서 마지막 단어까지)
+    road1 = ' '.join(address1.split('(')[0].split()[:-1])
+    road2 = ' '.join(address2.split('(')[0].split()[:-1])
+    
+    # 동 추출 (괄호 내의 내용)
+    dong1 = address1.split('(')[-1].split(')')[0]
+    dong2 = address2.split('(')[-1].split(')')[0]
+    
+    # 번지 추출
+    bunji1 = address1.split('(')[0].split()[-1]
+    bunji2 = address2.split('(')[0].split()[-1]
+    
+    # 도로명과 동이 일치하는지 확인
+    if road1 == road2 and dong1 == dong2:
+        # 번지 부분을 비교하여 첫 번째 주소의 번지가 두 번째 주소의 번지에 포함되는지 확인
+        if bunji1 in bunji2:
+            return True
+    return False
+
+def perform_address_search(search_data):
+    api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
+    base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
+
+    payload = {
+        'confmKey': api_key,
+        'currentPage': '1',
+        'countPerPage': '2',
+        'resultType': 'json',
+        'keyword': search_data,
+    }
+
+    response = requests.get(base_url, params=payload)
+
+    if response.status_code == 200:
+        search_result = response.json()
+        print("Address API Response:", search_result)  # 추가된 출력문
+        if 'results' in search_result and 'juso' in search_result['results']:
+            result_data = search_result['results']['juso']
+            if result_data:
+                # Extract and return the road addresses from the API response
+                return [result.get('roadAddr', '') for result in result_data]
+
+    return ['F'] 
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    run(app, host='0.0.0.0', port=5000)
