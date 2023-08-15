@@ -310,7 +310,7 @@ def perform_address_search(search_data):
     payload = {
         'confmKey': api_key,
         'currentPage': '1',
-        'countPerPage': '10',
+        'countPerPage': '2',
         'resultType': 'json',
         'keyword': search_data,
     }
@@ -329,6 +329,6 @@ def perform_address_search(search_data):
     return []
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=8000)
 
   
