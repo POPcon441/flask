@@ -198,24 +198,24 @@ def perform_address_search(search_data):
     response = requests.get(base_url, params=payload)
 
     if response.status_code == 200:
-        search_result = response.json()
-        print("Address API Response:", search_result)
-        
-        if 'results' in search_result and 'juso' in search_result['results']:
-            result_data = search_result['results']['juso']
+    search_result = response.json()
+    print("Address API Response:", search_result)
+    
+    if 'results' in search_result and 'juso' in search_result['results']:
+        result_data = search_result['results']['juso']
 
-            if len(result_data) == 1:
-                return result_data[0].get('roadAddr', '')
-            elif len(result_data) == 2:
-                address1 = result_data[0].get('roadAddr', '')
-                address2 = result_data[1].get('roadAddr', '')
-                if check_address_inclusion(address1, address2) == True:
-                    return address1
-                else:
-                    return 'F'
+        if len(result_data) == 1:
+            return result_data[0].get('roadAddr', '')
+        elif len(result_data) == 2:
+            address1 = result_data[0].get('roadAddr', '')
+            address2 = result_data[1].get('roadAddr', '')
+            if check_address_inclusion(address1, address2):
+                return address1
             else:
                 return 'F'
-                
+        else:
+            return 'F'
+            
 @app.route('/search', methods=['POST'])
 def search():
     try:
