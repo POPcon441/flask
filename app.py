@@ -263,13 +263,7 @@ def perform_address_search(search_data):
                 addr1 = result_data[0].get('roadAddr', '')
                 addr2 = result_data[1].get('roadAddr', '')
                 distance = Levenshtein.distance(addr1, addr2)
-                
-                # Levenshtein 거리가 5보다 적을 경우 출력
-                if distance <= 2:
-                    print(f"Levenshtein distance between the two addresses: {distance}")
-                    return [addr1]
-                else:
-                    return ['F']
+                print(distance)
 
     return ['F']
 
