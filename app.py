@@ -178,8 +178,10 @@ def check_address_inclusion(address1, address2):
     # 도로명과 동이 일치하는지 확인
     if road1 == road2 and dong1 == dong2:
         # 번지 부분을 비교하여 첫 번째 주소의 번지가 두 번째 주소의 번지에 포함되는지 확인
-        return bunji1 in bunji2
+        if bunji1 in bunji2:
+            return True
     return False
+
 
 def perform_address_search(search_data):
     api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
@@ -201,21 +203,19 @@ def perform_address_search(search_data):
         
         if 'results' in search_result and 'juso' in search_result['results']:
             result_data = search_result['results']['juso']
-            
-            if not result_data:
-                return 'F'
-            elif len(result_data) == 1:
+
+            if len(result_data) == 1:
                 return result_data[0].get('roadAddr', '')
-            elif len(result_data) >= 2:
+            elif len(result_data) == 2:
                 address1 = result_data[0].get('roadAddr', '')
                 address2 = result_data[1].get('roadAddr', '')
-                if check_address_inclusion(address1, address2):
+                if check_address_inclusion(address1, address2) == True:
                     return address1
                 else:
-                    return [result.get('roadAddr', '') for result in result_data]
-
-    return 'F'
-
+                    return 'F'
+            else:
+                return 'F'
+                
 @app.route('/search', methods=['POST'])
 def search():
     try:
