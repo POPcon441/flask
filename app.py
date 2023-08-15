@@ -141,47 +141,14 @@ mapping_df = pd.read_excel(mapping_file)
 # Create a dictionary mapping English words to Korean words
 mapping_dict = dict(zip(mapping_df['로마자표기'], mapping_df['한글']))
 
+# 함수 내 영어 단어를 한글로 변환하고, 일치하는 영단어가 없다면 삭제하는 부분
 # 함수 내 영어 단어를 한글로 변환하는 부분
 def replace_english_with_korean(sentence):
     def replace_word(match):
         word = match.group(0)
-        korean_word = mapping_dict.get(word)
-        if korean_word is not None:
-            return korean_word
-        else:
-            return ""
+        return mapping_dict.get(word, word)
 
     return re.sub(r'\b[A-Za-z-]+\b', replace_word, sentence)
-
-def remove_unknown_korean_words(sentence):
-    words = re.findall(r'[가-힣\d]+', sentence)
-    filtered_words = []
-
-    for word in words:
-        if (word == '지하' or word.isdigit() or re.match(r'^\d+번길$|^\d+로$|^\d+길$', word) or re.match(r'^[\d-]+$', word)) or word in korean_words_set:
-            filtered_words.append(word)
-
-    return ' '.join(filtered_words)
-
-def check_address_inclusion(address1, address2):
-    # 도로명 추출 (동 앞의 내용에서 마지막 단어까지)
-    road1 = ' '.join(address1.split('(')[0].split()[:-1])
-    road2 = ' '.join(address2.split('(')[0].split()[:-1])
-    
-    # 동 추출 (괄호 내의 내용)
-    dong1 = address1.split('(')[-1].split(')')[0]
-    dong2 = address2.split('(')[-1].split(')')[0]
-    
-    # 번지 추출
-    bunji1 = address1.split('(')[0].split()[-1]
-    bunji2 = address2.split('(')[0].split()[-1]
-    
-    # 도로명과 동이 일치하는지 확인
-    if road1 == road2 and dong1 == dong2:
-        # 번지 부분을 비교하여 첫 번째 주소의 번지가 두 번째 주소의 번지에 포함되는지 확인
-        if bunji1 in bunji2:
-            return True
-    return False
 
 
 class TrieNode:
@@ -241,7 +208,7 @@ def correct_and_translate(input_word, mapping_dict, trie, max_distance):
     translated_word = mapping_dict.get(corrected_word, corrected_word)
     return translated_word
 
-# Load mapping data from the Excel file
+# Load data from the other Excel file (contains the mapping)
 mapping_file = 'data.xlsx'
 mapping_df = pd.read_excel(mapping_file)
 mapping_dict = dict(zip(mapping_df['로마자표기'], mapping_df['한글']))
@@ -283,6 +250,56 @@ for element in elements:
     corrected_elements.append(corrected_element)
 
 corrected_word = ' '.join(corrected_elements)
+
+
+
+
+def check_address_inclusion(address1, address2):
+    # 도로명 추출 (동 앞의 내용에서 마지막 단어까지)
+    road1 = ' '.join(address1.split('(')[0].split()[:-1])
+    road2 = ' '.join(address2.split('(')[0].split()[:-1])
+    
+    # 동 추출 (괄호 내의 내용)
+    dong1 = address1.split('(')[-1].split(')')[0]
+    dong2 = address2.split('(')[-1].split(')')[0]
+    
+    # 번지 추출
+    bunji1 = address1.split('(')[0].split()[-1]
+    bunji2 = address2.split('(')[0].split()[-1]
+    
+    # 도로명과 동이 일치하는지 확인
+    if road1 == road2 and dong1 == dong2:
+        # 번지 부분을 비교하여 첫 번째 주소의 번지가 두 번째 주소의 번지에 포함되는지 확인
+        if bunji1 in bunji2:
+            return True
+    return False
+
+def perform_address_search(search_data):
+    api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
+    base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
+
+    payload = {
+        'confmKey': api_key,
+        'currentPage': '1',
+        'countPerPage': '10',
+        'resultType': 'json',
+        'keyword': search_data,
+    }
+
+    response = requests.get(base_url, params=payload)
+
+    if response.status_code == 200:
+        search_result = response.json()
+        print("Address API Response:", search_result)  # 추가된 출력문
+        if 'results' in search_result and 'juso' in search_result['results']:
+            result_data = search_result['results']['juso']
+            if result_data:
+                # Extract and return the road addresses from the API response
+                return [result.get('roadAddr', '') for result in result_data]
+
+    return ['F']
+
+
 
 @app.route('/search', methods=['POST'])
 def search():
