@@ -212,7 +212,7 @@ def correct_and_translate(input_word, mapping_dict, trie, max_distance):
     return translated_word
 
 # Load mapping data from the Excel file
-mapping_file = 'C:\\Users\\rkten\\OneDrive\\바탕 화면\\gongmojeon\\data.xlsx'
+mapping_file = 'data.xlsx'
 mapping_df = pd.read_excel(mapping_file)
 mapping_dict = dict(zip(mapping_df['로마자표기'], mapping_df['한글']))
 
