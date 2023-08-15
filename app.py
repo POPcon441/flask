@@ -2,6 +2,7 @@ import re
 import pandas as pd
 import requests
 from flask import Flask, jsonify, request
+import Levenshtein
 
 app = Flask(__name__)
 
@@ -237,7 +238,7 @@ def perform_address_search(search_data):
     payload = {
         'confmKey': api_key,
         'currentPage': '1',
-        'countPerPage': '10',
+        'countPerPage': '2',  # 10개의 결과를 받아옴 (상황에 따라 적절한 값을 설정)
         'resultType': 'json',
         'keyword': search_data,
     }
@@ -246,12 +247,29 @@ def perform_address_search(search_data):
 
     if response.status_code == 200:
         search_result = response.json()
-        print("Address API Response:", search_result)  # 추가된 출력문
         if 'results' in search_result and 'juso' in search_result['results']:
             result_data = search_result['results']['juso']
-            if result_data:
-                # Extract and return the road addresses from the API response
-                return [result.get('roadAddr', '') for result in result_data]
+
+            # 결과가 0개일 경우
+            if len(result_data) == 0:
+                return ['F']
+            
+            # 결과가 1개일 경우
+            elif len(result_data) == 1:
+                return [result_data[0].get('roadAddr', '')]
+            
+            # 결과가 2개 이상일 경우
+            else:
+                addr1 = result_data[0].get('roadAddr', '')
+                addr2 = result_data[1].get('roadAddr', '')
+                distance = Levenshtein.distance(addr1, addr2)
+                
+                # Levenshtein 거리가 5보다 적을 경우 출력
+                if distance <= 2:
+                    print(f"Levenshtein distance between the two addresses: {distance}")
+                    return [addr1]
+                else:
+                    return ['F']
 
     return ['F']
 
