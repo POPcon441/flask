@@ -172,7 +172,6 @@ def remove_unknown_korean_words(sentence):
 
 
 @app.route('/search', methods=['POST'])
-
 def search():
     try:
         if request.is_json:
@@ -223,7 +222,7 @@ def search():
 
             if len(result_address) == 1:
                 results.append({'seq': seq, 'resultAddress': result_address[0]})
-            elif len(result_address) == 2:
+            elif len(result_address) >= 2:
                 if check_address_inclusion(result_address[0], result_address[1]) == True:
                     results.append({'seq': seq, 'resultAddress': result_address[0]})
                 else:
@@ -264,7 +263,7 @@ def perform_address_search(search_data):
     payload = {
         'confmKey': api_key,
         'currentPage': '1',
-        'countPerPage': '2',
+        'countPerPage': '10',
         'resultType': 'json',
         'keyword': search_data,
     }
