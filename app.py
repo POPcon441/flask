@@ -2,7 +2,6 @@ import re
 import pandas as pd
 import requests
 from flask import Flask, jsonify, request
-import Levenshtein
 
 app = Flask(__name__)
 
@@ -58,7 +57,6 @@ def process_address_patterns(address):
             result += replacement_func(match)
     
     return result.strip()
-
 
 def convert_hybrid_words(text):
     # 정규표현식을 사용하여 한영혼용단어를 찾습니다.
@@ -133,8 +131,6 @@ def convert_hybrid_words(text):
     
     return text
 
-
-
 # Load data from the other Excel file (contains the mapping)
 mapping_file = 'data.xlsx'
 mapping_df = pd.read_excel(mapping_file)
@@ -154,9 +150,6 @@ def replace_english_with_korean(sentence):
 
     return re.sub(r'\b[A-Za-z-]+\b', replace_word, sentence)
 
-
-
-
 korean_words_set = set(mapping_df['한글'])
 
 def remove_unknown_korean_words(sentence):
@@ -168,8 +161,31 @@ def remove_unknown_korean_words(sentence):
             filtered_words.append(word)
 
     return ' '.join(filtered_words)
+    
+def perform_address_search(search_data):
+    api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
+    base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
 
+    payload = {
+        'confmKey': api_key,
+        'currentPage': '1',
+        'countPerPage': '10',
+        'resultType': 'json',
+        'keyword': search_data,
+    }
 
+    response = requests.get(base_url, params=payload)
+
+    if response.status_code == 200:
+        search_result = response.json()
+        print("Address API Response:", search_result)  # 추가된 출력문
+        if 'results' in search_result and 'juso' in search_result['results']:
+            result_data = search_result['results']['juso']
+            if result_data:
+                # Extract and return the road addresses from the API response
+                return [result.get('roadAddr', '') for result in result_data]
+
+    return ['F']
 
 @app.route('/search', methods=['POST'])
 def search():
@@ -226,46 +242,10 @@ def search():
 
         response_data = {'HEADER': {'RESULT_CODE': 'S', 'RESULT_MSG': 'Success'}, 'BODY': results}
         return jsonify(response_data)
+        
     except Exception as e:
         response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
         return jsonify(response_data)
-
-
-def perform_address_search(search_data):
-    api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
-    base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
-
-    payload = {
-        'confmKey': api_key,
-        'currentPage': '1',
-        'countPerPage': '2',  # 10개의 결과를 받아옴 (상황에 따라 적절한 값을 설정)
-        'resultType': 'json',
-        'keyword': search_data,
-    }
-
-    response = requests.get(base_url, params=payload)
-
-    if response.status_code == 200:
-        search_result = response.json()
-        if 'results' in search_result and 'juso' in search_result['results']:
-            result_data = search_result['results']['juso']
-
-            # 결과가 0개일 경우
-            if len(result_data) == 0:
-                return ['F']
-            
-            # 결과가 1개일 경우
-            elif len(result_data) == 1:
-                return [result_data[0].get('roadAddr', '')]
-            
-            # 결과가 2개 이상일 경우
-            else:
-                addr1 = result_data[0].get('roadAddr', '')
-                addr2 = result_data[1].get('roadAddr', '')
-                distance = Levenshtein.distance(addr1, addr2)
-                print(distance)
-
-    return ['F']
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
