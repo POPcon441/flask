@@ -182,7 +182,6 @@ def check_address_inclusion(address1, address2):
             return True
     return False
 
-
 def perform_address_search(search_data):
     api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
     base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
@@ -198,25 +197,18 @@ def perform_address_search(search_data):
     response = requests.get(base_url, params=payload)
 
     if response.status_code == 200:
-    search_result = response.json()
-    print("Address API Response:", search_result)
-    
-    if 'results' in search_result and 'juso' in search_result['results']:
-        result_data = search_result['results']['juso']
+        search_result = response.json()
+        print("Address API Response:", search_result)  # 추가된 출력문
+        if 'results' in search_result and 'juso' in search_result['results']:
+            result_data = search_result['results']['juso']
+            if result_data:
+                # Extract and return the road addresses from the API response
+                return [result.get('roadAddr', '') for result in result_data]
 
-        if len(result_data) == 1:
-            return result_data[0].get('roadAddr', '')
-        elif len(result_data) == 2:
-            address1 = result_data[0].get('roadAddr', '')
-            address2 = result_data[1].get('roadAddr', '')
-            if check_address_inclusion(address1, address2):
-                return address1
-            else:
-                return 'F'
-        else:
-            return 'F'
-            
+    return ['F']
+
 @app.route('/search', methods=['POST'])
+
 def search():
     try:
         if request.is_json:
@@ -257,8 +249,9 @@ def search():
             result = replace_english_with_korean(result.strip())  # 영어 단어 한글 변환 적용
             print("After replace_english_with_korean:", result)
             
-            result = remove_unknown_korean_words(result.strip())
-            print("remove_unknown_korean_words:", result)
+            result = correct_and_translate_address(result, mapping_df)
+            print("correct_and_translate_address:", result)
+
 
             
             # 주소 검색 결과 가져오기
@@ -266,15 +259,21 @@ def search():
 
             if len(result_address) == 1:
                 results.append({'seq': seq, 'resultAddress': result_address[0]})
+            elif len(result_address) == 2:
+                address1 = result_address[0]
+                address2 = result_address[1]
+                if check_address_inclusion(address1, address2) == True:
+                    results.append({'seq': seq, 'resultAddress': address1})
+                else:
+                    results.append({'seq': seq, 'resultAddress': 'F'})
             else:
                 results.append({'seq': seq, 'resultAddress': 'F'})
 
         response_data = {'HEADER': {'RESULT_CODE': 'S', 'RESULT_MSG': 'Success'}, 'BODY': results}
         return jsonify(response_data)
-        
     except Exception as e:
         response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
         return jsonify(response_data)
-
+        
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
