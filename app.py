@@ -342,8 +342,8 @@ def search():
             result = replace_english_with_korean(result.strip())  # 영어 단어 한글 변환 적용
             print("After replace_english_with_korean:", result)
             
-            result = remove_unknown_korean_words(result.strip())
-            print("remove_unknown_korean_words:", result)
+            result = correct_and_translate(result.strip())
+            print("correct_and_translate:", result)
 
             
             # 주소 검색 결과 가져오기
