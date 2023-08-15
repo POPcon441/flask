@@ -145,9 +145,43 @@ mapping_dict = dict(zip(mapping_df['로마자표기'], mapping_df['한글']))
 def replace_english_with_korean(sentence):
     def replace_word(match):
         word = match.group(0)
-        return mapping_dict.get(word, word)
+        korean_word = mapping_dict.get(word)
+        if korean_word is not None:
+            return korean_word
+        else:
+            return ""
 
     return re.sub(r'\b[A-Za-z-]+\b', replace_word, sentence)
+
+def remove_unknown_korean_words(sentence):
+    words = re.findall(r'[가-힣\d]+', sentence)
+    filtered_words = []
+
+    for word in words:
+        if (word == '지하' or word.isdigit() or re.match(r'^\d+번길$|^\d+로$|^\d+길$', word) or re.match(r'^[\d-]+$', word)) or word in korean_words_set:
+            filtered_words.append(word)
+
+    return ' '.join(filtered_words)
+
+def check_address_inclusion(address1, address2):
+    # 도로명 추출 (동 앞의 내용에서 마지막 단어까지)
+    road1 = ' '.join(address1.split('(')[0].split()[:-1])
+    road2 = ' '.join(address2.split('(')[0].split()[:-1])
+    
+    # 동 추출 (괄호 내의 내용)
+    dong1 = address1.split('(')[-1].split(')')[0]
+    dong2 = address2.split('(')[-1].split(')')[0]
+    
+    # 번지 추출
+    bunji1 = address1.split('(')[0].split()[-1]
+    bunji2 = address2.split('(')[0].split()[-1]
+    
+    # 도로명과 동이 일치하는지 확인
+    if road1 == road2 and dong1 == dong2:
+        # 번지 부분을 비교하여 첫 번째 주소의 번지가 두 번째 주소의 번지에 포함되는지 확인
+        if bunji1 in bunji2:
+            return True
+    return False
 
 
 class TrieNode:
@@ -313,35 +347,7 @@ def search():
     except Exception as e:
         response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
         return jsonify(response_data)
-def remove_unknown_korean_words(sentence):
-    words = re.findall(r'[가-힣\d]+', sentence)
-    filtered_words = []
 
-    for word in words:
-        if (word == '지하' or word.isdigit() or re.match(r'^\d+번길$|^\d+로$|^\d+길$', word) or re.match(r'^[\d-]+$', word)) or word in korean_words_set:
-            filtered_words.append(word)
-
-    return ' '.join(filtered_words)
-
-def check_address_inclusion(address1, address2):
-    # 도로명 추출 (동 앞의 내용에서 마지막 단어까지)
-    road1 = ' '.join(address1.split('(')[0].split()[:-1])
-    road2 = ' '.join(address2.split('(')[0].split()[:-1])
-    
-    # 동 추출 (괄호 내의 내용)
-    dong1 = address1.split('(')[-1].split(')')[0]
-    dong2 = address2.split('(')[-1].split(')')[0]
-    
-    # 번지 추출
-    bunji1 = address1.split('(')[0].split()[-1]
-    bunji2 = address2.split('(')[0].split()[-1]
-    
-    # 도로명과 동이 일치하는지 확인
-    if road1 == road2 and dong1 == dong2:
-        # 번지 부분을 비교하여 첫 번째 주소의 번지가 두 번째 주소의 번지에 포함되는지 확인
-        if bunji1 in bunji2:
-            return True
-    return False
 
 def perform_address_search(search_data):
     api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
@@ -366,7 +372,7 @@ def perform_address_search(search_data):
                 # Extract and return the road addresses from the API response
                 return [result.get('roadAddr', '') for result in result_data]
 
-    return []
+    return ['F']
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
