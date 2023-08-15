@@ -224,10 +224,8 @@ def search():
             if len(result_address) == 1:
                 results.append({'seq': seq, 'resultAddress': result_address[0]})
             elif len(result_address) == 2:
-                address1 = result_address[0]
-                address2 = result_address[1]
-                if check_address_inclusion(address1, address2) == True:
-                    results.append({'seq': seq, 'resultAddress': address1})
+                if check_address_inclusion(result_address[0], result_address[1]) == True:
+                    results.append({'seq': seq, 'resultAddress': result_address[0]})
                 else:
                     results.append({'seq': seq, 'resultAddress': 'F'})
             else:
@@ -282,7 +280,7 @@ def perform_address_search(search_data):
                 # Extract and return the road addresses from the API response
                 return [result.get('roadAddr', '') for result in result_data]
 
-    return ['F'] 
+    return ['F']
 
 if __name__ == "__main__":
-    run(app, host='0.0.0.0', port=5000)
+    app.run(app, host='0.0.0.0', port=5000)
