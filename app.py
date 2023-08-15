@@ -365,31 +365,5 @@ def search():
         response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
         return jsonify(response_data)
 
-
-def perform_address_search(search_data):
-    api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
-    base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
-
-    payload = {
-        'confmKey': api_key,
-        'currentPage': '1',
-        'countPerPage': '10',
-        'resultType': 'json',
-        'keyword': search_data,
-    }
-
-    response = requests.get(base_url, params=payload)
-
-    if response.status_code == 200:
-        search_result = response.json()
-        print("Address API Response:", search_result)  # 추가된 출력문
-        if 'results' in search_result and 'juso' in search_result['results']:
-            result_data = search_result['results']['juso']
-            if result_data:
-                # Extract and return the road addresses from the API response
-                return [result.get('roadAddr', '') for result in result_data]
-
-    return ['F']
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
