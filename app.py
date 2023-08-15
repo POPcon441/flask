@@ -241,6 +241,51 @@ def process_result(result):
     corrected_address = ' '.join(corrected_elements)
     return corrected_address
 
+def check_address_inclusion(address1, address2):
+    # 도로명 추출 (동 앞의 내용에서 마지막 단어까지)
+    road1 = ' '.join(address1.split('(')[0].split()[:-1])
+    road2 = ' '.join(address2.split('(')[0].split()[:-1])
+    
+    # 동 추출 (괄호 내의 내용)
+    dong1 = address1.split('(')[-1].split(')')[0]
+    dong2 = address2.split('(')[-1].split(')')[0]
+    
+    # 번지 추출
+    bunji1 = address1.split('(')[0].split()[-1]
+    bunji2 = address2.split('(')[0].split()[-1]
+    
+    # 도로명과 동이 일치하는지 확인
+    if road1 == road2 and dong1 == dong2:
+        # 번지 부분을 비교하여 첫 번째 주소의 번지가 두 번째 주소의 번지에 포함되는지 확인
+        if bunji1 in bunji2:
+            return True
+    return False
+
+def perform_address_search(search_data):
+    api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
+    base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
+
+    payload = {
+        'confmKey': api_key,
+        'currentPage': '1',
+        'countPerPage': '2',
+        'resultType': 'json',
+        'keyword': search_data,
+    }
+
+    response = requests.get(base_url, params=payload)
+
+    if response.status_code == 200:
+        search_result = response.json()
+        print("Address API Response:", search_result)  # 추가된 출력문
+        if 'results' in search_result and 'juso' in search_result['results']:
+            result_data = search_result['results']['juso']
+            if result_data:
+                # Extract and return the road addresses from the API response
+                return [result.get('roadAddr', '') for result in result_data]
+
+    return ['F']
+
 @app.route('/search', methods=['POST'])
 def search():
     try:
@@ -284,17 +329,19 @@ def search():
             
             result = process_result(result.strip())
             print("process_result:", result)
-            
-
-
-            
+                      
             # 주소 검색 결과 가져오기
             result_address = perform_address_search(result)
 
-            if len(result_address) == 0:
-                results.append({'seq': seq, 'resultAddress': 'F'})
-            elif len(result_address) >= 1:
+            if len(result_address) == 1:
                 results.append({'seq': seq, 'resultAddress': result_address[0]})
+            elif len(result_address) == 2:
+                if check_address_inclusion(result_address[0], result_address[1]) == True:
+                    results.append({'seq': seq, 'resultAddress': result_address[0]})
+                else:
+                    results.append({'seq': seq, 'resultAddress': 'F'})
+            else:
+                results.append({'seq': seq, 'resultAddress': 'F'})
 
         response_data = {'HEADER': {'RESULT_CODE': 'S', 'RESULT_MSG': 'Success'}, 'BODY': results}
         return jsonify(response_data)
@@ -302,31 +349,5 @@ def search():
         response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
         return jsonify(response_data)
 
-
-def perform_address_search(search_data):
-    api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
-    base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
-
-    payload = {
-        'confmKey': api_key,
-        'currentPage': '1',
-        'countPerPage': '10',
-        'resultType': 'json',
-        'keyword': search_data,
-    }
-
-    response = requests.get(base_url, params=payload)
-
-    if response.status_code == 200:
-        search_result = response.json()
-        print("Address API Response:", search_result)  # 추가된 출력문
-        if 'results' in search_result and 'juso' in search_result['results']:
-            result_data = search_result['results']['juso']
-            if result_data:
-                # Extract and return the road addresses from the API response
-                return [result.get('roadAddr', '') for result in result_data]
-
-    return []
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000)  
