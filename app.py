@@ -1,8 +1,7 @@
 import re
-from pandas import pandas as pd
+import pandas as pd
 import requests
 from flask import Flask, jsonify, request
-from gunicorn.app.wsgiapp import run
 
 app = Flask(__name__)
 
@@ -132,54 +131,6 @@ def convert_hybrid_words(text):
     text = text.replace(' Station-ro', 'Station-ro')
     
     return text
-    
-def levenshtein_distance(s1, s2):
-    if len(s1) > len(s2):
-        s1, s2 = s2, s1
-
-    distances = list(range(len(s1) + 1))
-    for index2, char2 in enumerate(s2):
-        new_distances = [index2 + 1]
-        for index1, char1 in enumerate(s1):
-            if char1 == char2:
-                new_distances.append(distances[index1])
-            else:
-                new_distances.append(1 + min(distances[index1], distances[index1 + 1], new_distances[-1]))
-        distances = new_distances
-
-    return distances[-1]
-
-def perform_address_search(search_data):
-    api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
-    base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
-    payload = {
-        'confmKey': api_key,
-        'currentPage': '1',
-        'countPerPage': '2',  # 결과를 2개로 제한
-        'resultType': 'json',
-        'keyword': search_data,
-    }
-    response = requests.get(base_url, params=payload)
-    if response.status_code == 200:
-        search_result = response.json()
-        if 'results' in search_result and 'juso' in search_result['results']:
-            result_data = search_result['results']['juso']
-            if len(result_data) == 2:
-                address1 = result_data[0].get('roadAddr', '')
-                address2 = result_data[1].get('roadAddr', '')
-                distance = levenshtein_distance(address1, address2)  # Levenshtein 거리 계산
-                print("Levenshtein Distance between addresses:")
-                print(f"Address 1: {address1}")
-                print(f"Address 2: {address2}")
-                print(f"Distance: {distance}")
-                if distance == 0:
-                    results.append({'seq': seq, 'resultAddress': address1})
-                else:
-                    results.append({'seq': seq, 'resultAddress': 'F', 'distance': distance})
-            elif len(result_data) == 1:  # 주소 결과가 1개인 경우
-                results.append({'seq': seq, 'resultAddress': result_data[0].get('roadAddr', '')})
-    return results
-
 
 
 
@@ -278,5 +229,31 @@ def search():
         response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
         return jsonify(response_data)
 
+
+def perform_address_search(search_data):
+    api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
+    base_url = 'http://www.juso.go.kr/addrlink/addrLinkApi.do'
+
+    payload = {
+        'confmKey': api_key,
+        'currentPage': '1',
+        'countPerPage': '10',
+        'resultType': 'json',
+        'keyword': search_data,
+    }
+
+    response = requests.get(base_url, params=payload)
+
+    if response.status_code == 200:
+        search_result = response.json()
+        print("Address API Response:", search_result)  # 추가된 출력문
+        if 'results' in search_result and 'juso' in search_result['results']:
+            result_data = search_result['results']['juso']
+            if result_data:
+                # Extract and return the road addresses from the API response
+                return [result.get('roadAddr', '') for result in result_data]
+
+    return ['F']
+
 if __name__ == "__main__":
-    run(app, host='0.0.0.0', port=5000)
+    app.run(host="0.0.0.0", port=5000)
