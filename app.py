@@ -277,10 +277,7 @@ def search():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-def process_data(data_list):
-    # 데이터 처리 로직을 여기에 구현
-    # 이 예제에서는 받은 데이터를 그대로 반환한다고 가정
-    return data_list
+
 
         for req in request_list:
             seq = req.get('seq')
