@@ -1,7 +1,7 @@
 import re
 import pandas as pd
 import requests
-from flask import Flask, jsonify, request, g, current_app
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
@@ -220,10 +220,6 @@ def perform_address_search(search_data):
     return ['F']
 
 
-@app.before_request
-def set_connection_timeout():
-    # 커스텀 커넥션 타임아웃 값 설정 (20분에 해당하는 초)
-    g.connection_timeout = 1200
 
 @app.route('/search', methods=['POST'])
 def search():
@@ -293,4 +289,4 @@ def search():
         return jsonify(response_data)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000,timeout=1200)
+    app.run(host="0.0.0.0", port=8000)
