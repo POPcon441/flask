@@ -260,7 +260,27 @@ def search():
         
         request_list = request_data.get('requestList', [])
 
-        results = []
+        # page와 page_size를 request에서 가져오기
+        page = request_data.get('page', 0)
+        page_size = request_data.get('page_size', 2)  # 기본적으로 2개씩 데이터 반환
+
+        # 데이터 처리 로직. 여기서는 request_list를 처리하도록 가정
+        results = process_data(request_list)
+
+        # 페이지에 따라 결과 분할
+        start_index = page * page_size
+        end_index = start_index + page_size
+        paginated_results = results[start_index:end_index]
+
+        return jsonify({'data': paginated_results, 'total': len(results)})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+def process_data(data_list):
+    # 데이터 처리 로직을 여기에 구현
+    # 이 예제에서는 받은 데이터를 그대로 반환한다고 가정
+    return data_list
 
         for req in request_list:
             seq = req.get('seq')
