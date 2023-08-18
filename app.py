@@ -289,4 +289,4 @@ def search():
         return jsonify(response_data)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=443, ssl_context=('path_to_cert.crt','path_to_key.key'))
+    app.run(host="34.64.89.62", port=443, ssl_context=('path_to_cert.crt','path_to_key.key'))
