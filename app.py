@@ -219,6 +219,35 @@ def perform_address_search(search_data):
 
     return ['F']
 
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
+def requests_retry_session(
+    retries=3,  # 재시도 횟수
+    backoff_factor=0.3,  # 지수 백오프를 위한 계수
+    status_forcelist=(500, 502, 504),  # 이 상태 코드를 받으면 재시도
+    session=None
+):
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
+
+# 사용 예
+url = 'https://port-0-flask-3prof2lll66y4t2.sel3.cloudtype.app/search'
+response = requests_retry_session().get(url)
+if response.status_code == 200:
+    data = response.json()
+    print(data)
 
 
 @app.route('/search', methods=['POST'])
