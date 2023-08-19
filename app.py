@@ -269,7 +269,8 @@ def search():
 
             # 클라이언트 API 요청 수행
             response = perform_client_api_request(req)
-
+            result_address = perform_address_search(result)
+            
             if len(result_address) == 1:
                 results.append({'seq': seq, 'resultAddress': result_address[0]})
             elif len(result_address) >= 2:
