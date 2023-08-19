@@ -314,8 +314,6 @@ def search():
             result = process_address(result.strip(), eng_mapping_dict, kor_mapping_dict, eng_trie, kor_trie)
             print("process_address:", result)
             
-
-
             
             # 주소 검색 결과 가져오기
             result_address = perform_address_search(result)
