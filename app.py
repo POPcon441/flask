@@ -2,17 +2,12 @@ import re
 import pandas as pd
 import requests
 from flask import Flask, jsonify, request
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
-
-
-session = requests.Session()
-retry = Retry(total=3, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
-adapter = HTTPAdapter(max_retries=retry)
-session.mount('http://', adapter)
-session.mount('https://', adapter)
+import time
 
 app = Flask(__name__)
+
+MAX_RETRIES = 3  # 최대 재시도 횟수
+RETRY_DELAY = 5  # 재시도 딜레이 (초)
 
 def add_space_to_korean_words(text):
     pattern = re.compile(r'(?<![ㄱ-ㅎㅏ-ㅣ가-힣])((?!도|시|군|구|읍|면|로|길)[ㄱ-ㅎㅏ-ㅣ가-힣]+)')
@@ -215,7 +210,7 @@ def perform_address_search(search_data):
         'keyword': search_data,
     }
 
-    response = session.get(base_url, params=payload)
+    response = requests.get(base_url, params=payload)
 
     if response.status_code == 200:
         search_result = response.json()
