@@ -140,7 +140,21 @@ def remove_underground_numbers(column_value):
     if re.match(r'^지하\s?\d+$', column_value):
         return '답 없음 나와야 함'
     return column_value
+    
+def perform_client_api_request(request_data):
+    retries = 0
+    response = None
 
+    while retries < MAX_RETRIES:
+        try:
+            response = requests.post("https://port-0-flask-3prof2lll66y4t2.sel3.cloudtype.app/search", json=request_data, timeout=60)
+            response.raise_for_status()
+            break
+        except requests.exceptions.RequestException as e:
+            retries += 1
+            time.sleep(RETRY_DELAY)
+            continue
+    return response
 
 # Load data from the other Excel file (contains the mapping)
 mapping_file = 'data.csv'
@@ -160,10 +174,7 @@ def replace_english_with_korean(sentence):
             return ""
 
     return re.sub(r'\b[A-Za-z-]+\b', replace_word, sentence)
-
-
-
-
+    
 korean_words_set = set(mapping_df['한글'])
 
 def remove_unknown_korean_words(sentence):
@@ -244,37 +255,20 @@ def search():
             formatted_address = address
             print("Original Address:", formatted_address)
 
+            # 주소 처리 과정 (위에서 정의한 함수들을 활용)
             formatted_address = add_space_to_korean_words(formatted_address)
-            print("After add_space_to_korean_words:", formatted_address)
-
             formatted_address = add_space_to_uppercase_letters(formatted_address)
-            print("After add_space_to_uppercase_letters:", formatted_address)
-
             formatted_address = add_space_to_numbers(formatted_address)
-            print("After add_space_to_numbers:", formatted_address)
-
             formatted_address = remove_commas(formatted_address)
-            print("After remove_commas:", formatted_address)
-
-            # 패턴 매치 수행
             formatted_address = process_address_patterns(formatted_address)
-            print("After process_address_patterns:", formatted_address)
-
             result = convert_hybrid_words(formatted_address.strip())
-            print("After convert_hybrid_words:", result)
-
-            result = replace_english_with_korean(result.strip())  # 영어 단어 한글 변환 적용
-            print("After replace_english_with_korean:", result)
-
+            result = replace_english_with_korean(result.strip())
             result = remove_underground_numbers(result.strip())
-            print("remove_underground_numbers:", result)
-            
             result = remove_unknown_korean_words(result.strip())
-            print("remove_unknown_korean_words:", result)
+            print("Processed Address:", result)
 
-            
-            # 주소 검색 결과 가져오기
-            result_address = perform_address_search(result)
+            # 클라이언트 API 요청 수행
+            response = perform_client_api_request(req)
 
             if len(result_address) == 1:
                 results.append({'seq': seq, 'resultAddress': result_address[0]})
