@@ -338,8 +338,6 @@ def create_session():
     session.mount('https://', HTTPAdapter(max_retries=retries))
     return session
 
-
-
 # Function to perform address search using the session with retries
 def perform_address_search(search_data):
     api_key = 'devU01TX0FVVEgyMDIzMDcyODE1MzkzNzExMzk3MzA='
@@ -369,11 +367,5 @@ def perform_address_search(search_data):
 
     return []
 
-        except Exception as e:
-            print(f"Error occurred, retrying in {RETRY_WAIT_SECONDS} seconds...")
-            time.sleep(RETRY_WAIT_SECONDS)
-
-    return []
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=8000)  
