@@ -1,9 +1,11 @@
 import re
 import pandas as pd
 import requests
+import json
 from flask import Flask, jsonify, request
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+
 
 app = Flask(__name__)
 
@@ -284,50 +286,56 @@ def search():
             address = req.get('requestAddress')
 
             formatted_address = address
-            print("Original Address:", formatted_address)
+            
 
             formatted_address = add_space_to_korean_words(formatted_address)
-            print("After add_space_to_korean_words:", formatted_address)
+            
 
             formatted_address = add_space_to_uppercase_letters(formatted_address)
-            print("After add_space_to_uppercase_letters:", formatted_address)
+            
 
             formatted_address = add_space_to_numbers(formatted_address)
-            print("After add_space_to_numbers:", formatted_address)
+            
 
             formatted_address = remove_commas(formatted_address)
-            print("After remove_commas:", formatted_address)
+            
 
             # 패턴 매치 수행
             formatted_address = process_address_patterns(formatted_address)
-            print("After process_address_patterns:", formatted_address)
+            
 
             result = convert_hybrid_words(formatted_address.strip())
-            print("After convert_hybrid_words:", result)
+            
 
             result = replace_english_with_korean(result.strip())  # 영어 단어 한글 변환 적용
-            print("After replace_english_with_korean:", result)
+            
             
             result = remove_underground_numbers(result.strip())
-            print("remove_underground_numbers:", result)
+           
             
             result = process_address(result.strip(), eng_mapping_dict, kor_mapping_dict, eng_trie, kor_trie)
-            print("process_address:", result)
+        
             
+
+
             
             # 주소 검색 결과 가져오기
             result_address = perform_address_search(result)
 
             if len(result_address) == 0:
-                results.append({'seq': seq, 'resultAddress': 'F'})
+                results.append({'seq': seq, 'resultAddress': '답 없음'})
             elif len(result_address) >= 1:
                 results.append({'seq': seq, 'resultAddress': result_address[0]})
 
         response_data = {'HEADER': {'RESULT_CODE': 'S', 'RESULT_MSG': 'Success'}, 'BODY': results}
+        print(json.dumps(response_data, ensure_ascii=False, indent=2))
         return jsonify(response_data)
+        
     except Exception as e:
         response_data = {'HEADER': {'RESULT_CODE': 'F', 'RESULT_MSG': str(e)}}
+        print(json.dumps(response_data, ensure_ascii=False, indent=2))
         return jsonify(response_data)
+        
 
 
 # Function to create a session with custom retry and timeout settings
@@ -337,6 +345,8 @@ def create_session():
     session.mount('http://', HTTPAdapter(max_retries=retries))
     session.mount('https://', HTTPAdapter(max_retries=retries))
     return session
+
+
 
 # Function to perform address search using the session with retries
 def perform_address_search(search_data):
@@ -366,6 +376,8 @@ def perform_address_search(search_data):
         print("An error occurred:", e)
 
     return []
+
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)  
